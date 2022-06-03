@@ -8,13 +8,12 @@ from pydantic import BaseModel
 app = FastAPI()
 sys.setrecursionlimit(1000000000)
 
-
 # .read().splitlines() ~= .readlines() ,
 # but .readlines() "\n" at the end of each item of the list ,
 # and .read().splitlines() doesn't ;
 words = open("words.txt", "r").read().splitlines()
 
-#VVVV
+
 # return a list of all words wich have 1 letter changed
 def get_nearest_words(word, ignored_word):
     similarWords = []
@@ -35,16 +34,15 @@ def get_nearest_words(word, ignored_word):
     return similarWords
 
 
-def worker(word, source, target_list, rounds_left, index=False):
-
+def worker(word, source, target_list, rounds_left):
     if not rounds_left:
 
         return []
 
     else:
-        words = get_nearest_words(word, ignored_word = source)
+        words_list = get_nearest_words(word, ignored_word = source)
 
-        word_list = set(words)
+        word_list = set(words_list)
 
         result = list(word_list.intersection(target_list))
 
@@ -54,29 +52,29 @@ def worker(word, source, target_list, rounds_left, index=False):
 
         else:
 
-                propositions = []
+            propositions = []
 
-                for _word in word_list:
+            for _word in word_list:
 
-                    result = worker(_word, words + source, target_list, rounds_left - 1)
+                result = worker(_word, words_list + source, target_list, rounds_left - 1)
 
-                    if result is None or result == []:
-                        continue
+                if result is None or result == []:
+                    continue
 
-                    result = list(result)
+                result = list(result)
 
-                    result.insert(0, _word)
+                result.insert(0, _word)
 
-                    propositions.append(result)
+                propositions.append(result)
 
-                if len(propositions) == 0:
-                    return None
+            if len(propositions) == 0:
+                return None
 
-                elif len(propositions) == 1:
-                    return propositions[0]
+            elif len(propositions) == 1:
+                return propositions[0]
 
-                else:
-                    return min(propositions, key = len)
+            else:
+                return min(propositions, key = len)
 
 
 def search(source, target):
@@ -84,14 +82,13 @@ def search(source, target):
         return [source]
 
     else:
-        max_rounds = 8
+        max_rounds = 5
 
         target_list = get_nearest_words(target, [])
 
-        data = worker(source, [], target_list, max_rounds, index=True)
+        data = worker(source, [], target_list, max_rounds)
 
         if data is not None:
-
             data.insert(0, source)
             data.append(target)
 
@@ -119,7 +116,6 @@ async def nword_req(data: GetNearestWords):
 
 @app.get("/path", status_code = 201)
 async def say_hello(resp: Response, data: PathBody):
-
     if (not re.match("([A-Z]|[a-z])", data.starting)) or (not re.match("([A-Z]|[a-z])", data.objective)):
         resp.status_code = status.HTTP_400_BAD_REQUEST
         return {
@@ -152,5 +148,3 @@ async def say_hello(resp: Response, data: PathBody):
                 "Path": data,
                 "Count": len(data)
             }
-
-
