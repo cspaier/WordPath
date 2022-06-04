@@ -21,7 +21,7 @@ idea given by @[cspaier](https://github.com/cspaier)
 |8| ~ 21.5 seconds|~ 28.000
 
 ### how does it works ?
-The API will get all "nearest words" (l¹) of the `source` and the `objective`, with a simple regex check:
+The API will get all "nearest words" (L¹) of the `source` and the `objective`, with a simple regex check:
 > For example, if the word is `words`, we will decompose in 5 regex checks:
 > * `.ords`
 > * `w.rds`
@@ -32,9 +32,9 @@ The API will get all "nearest words" (l¹) of the `source` and the `objective`, 
 
 - If any word is in both list, then the api found a word in `3` step.
 
-- Else it will retrive all "nearest words"(l²) of the "nearest words" (l¹).
+- Else it will retrive all "nearest words"(L²) of the "nearest words" (L¹).
 
 
-- If any word l² is in the nearest words of the objective, then the api found a way to connect thooses two words.
+- If any word L² is in the nearest words of the objective, then the api found a way to connect thooses two words.
 
-- Else, the same process will be applied with lⁿ⁻¹ and lⁿ until n = `maxLenght`
+- Else, the same process will be applied with Lⁿ⁻¹ and Lⁿ until n = `maxLenght`
