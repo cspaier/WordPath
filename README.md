@@ -38,3 +38,37 @@ The API will get all "nearest words" (L¹) of the `source` and the `objective`, 
 - If any word L² is in the nearest words of the objective, then the api found a way to connect thooses two words.
 
 - Else, the same process will be applied with Lⁿ⁻¹ and Lⁿ until n = `maxLenght`
+
+
+### Endpoints
+> Get the shortest path between 2 words:
+```http
+GET /path HTTP/1.1
+Host: 127.0.0.1:8000
+Content-Type: application/json
+Content-Length: 77
+
+{
+    "starting": "pomme",
+    "objective": "ville",
+    "maxLenght": 7
+}
+```
+
+Get nearest words of a word:
+```http
+GET /nearest-words HTTP/1.1
+Host: 127.0.0.1:8000
+Content-Type: application/json
+Content-Length: 25
+
+{
+    "word": "ville"
+}
+```
+
+Get two random words from the dictonnary
+```http
+GET /words HTTP/1.1
+Host: 127.0.0.1:8000
+```
