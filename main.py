@@ -5,8 +5,6 @@ from fastapi import FastAPI, Response, status
 from random import choices
 from pydantic import BaseModel
 
-import time
-
 app = FastAPI()
 sys.setrecursionlimit(1000000000)
 
@@ -15,7 +13,6 @@ sys.setrecursionlimit(1000000000)
 # and .read().splitlines() doesn't ;
 words = open("words.txt", "r").read().splitlines()
 
-iterat = 0
 # return a list of all words wich have 1 letter changed
 def get_nearest_words(word, word_list, ignored_word):
     similarWords = []
@@ -37,8 +34,6 @@ def get_nearest_words(word, word_list, ignored_word):
 
 
 def worker(word, source, target_list, rounds_left, _words):
-    global iterat
-    iterat += 1
     if not rounds_left:
 
         return []
@@ -145,14 +140,7 @@ async def say_hello(resp: Response, data: PathBody):
         }
 
     else:
-        global iterat
-
-        duration = time.time()
         data = search(data.starting, data.objective, data.maxLenght - 2)
-
-        print(time.time() - duration)
-        print(iterat)
-        iterat = 0
 
         if data is None:
             resp.status_code = status.HTTP_404_NOT_FOUND
