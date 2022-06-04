@@ -5,6 +5,8 @@ from fastapi import FastAPI, Response, status
 from random import choices
 from pydantic import BaseModel
 
+import time
+
 app = FastAPI()
 sys.setrecursionlimit(1000000000)
 
@@ -13,9 +15,9 @@ sys.setrecursionlimit(1000000000)
 # and .read().splitlines() doesn't ;
 words = open("words.txt", "r").read().splitlines()
 
-
+iterat = 0
 # return a list of all words wich have 1 letter changed
-def get_nearest_words(word, ignored_word):
+def get_nearest_words(word, word_list, ignored_word):
     similarWords = []
 
     # index for all letters in word
@@ -28,19 +30,21 @@ def get_nearest_words(word, ignored_word):
         r = re.compile("".join(_word))
 
         similarWords += [
-            line for line in words if r.match(line) and line != word and line not in ignored_word
+            line for line in word_list if r.match(line) and line != word and line not in ignored_word
         ]
 
     return similarWords
 
 
-def worker(word, source, target_list, rounds_left):
+def worker(word, source, target_list, rounds_left, _words):
+    global iterat
+    iterat += 1
     if not rounds_left:
 
         return []
 
     else:
-        words_list = get_nearest_words(word, ignored_word = source)
+        words_list = get_nearest_words(word, _words, ignored_word = source)
 
         word_list = set(words_list)
 
@@ -56,9 +60,10 @@ def worker(word, source, target_list, rounds_left):
 
             for _word in word_list:
 
-                result = worker(_word, words_list + source, target_list, rounds_left - 1)
+                result = worker(_word, words_list + source, target_list, rounds_left - 1, _words)
 
                 if result is None or result == []:
+
                     continue
 
                 result = list(result)
@@ -70,23 +75,21 @@ def worker(word, source, target_list, rounds_left):
             if len(propositions) == 0:
                 return None
 
-            elif len(propositions) == 1:
-                return propositions[0]
-
             else:
                 return min(propositions, key = len)
 
 
-def search(source, target):
+def search(source, target, max_rounds):
     if source == target:
         return [source]
 
     else:
-        max_rounds = 5
 
-        target_list = get_nearest_words(target, [])
+        words_list = words.copy()
 
-        data = worker(source, [], target_list, max_rounds)
+        target_list = get_nearest_words(target, words_list, [])
+
+        data = worker(source, [], target_list, max_rounds, words_list)
 
         if data is not None:
             data.insert(0, source)
@@ -98,6 +101,7 @@ def search(source, target):
 class PathBody(BaseModel):
     starting: str
     objective: str
+    maxLenght: int = 7
 
 
 class GetNearestWords(BaseModel):
@@ -111,7 +115,7 @@ async def root():
 
 @app.get("/nearest-words", status_code = 201)
 async def nword_req(data: GetNearestWords):
-    return get_nearest_words(data.word, [])
+    return get_nearest_words(data.word, words, [])
 
 
 @app.get("/path", status_code = 201)
@@ -134,8 +138,21 @@ async def say_hello(resp: Response, data: PathBody):
             "Error": "At least one of theses words is not in our dictonary"
         }
 
+    elif not 3 <= data.maxLenght <= 8:
+        resp.status_code = status.HTTP_400_BAD_REQUEST
+        return {
+            "Error": "maxLenght must be between 3 and 8 (included)"
+        }
+
     else:
-        data = search(data.starting, data.objective)
+        global iterat
+
+        duration = time.time()
+        data = search(data.starting, data.objective, data.maxLenght - 2)
+
+        print(time.time() - duration)
+        print(iterat)
+        iterat = 0
 
         if data is None:
             resp.status_code = status.HTTP_404_NOT_FOUND
@@ -144,6 +161,7 @@ async def say_hello(resp: Response, data: PathBody):
             }
 
         else:
+
             return {
                 "Path": data,
                 "Count": len(data)
