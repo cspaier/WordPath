@@ -20,6 +20,10 @@ idea given by @[cspaier](https://github.com/cspaier)
 |7| ~ 2.3 seconds|~ 2.800
 |8| ~ 21.5 seconds|~ 28.000
 
+**Note:** it depend of the number of possibles paths.
+You should take in consideration the duration in function on the number of path: </br>
+1000 paths tested ≈ 1 second
+
 ### how does it works ?
 The API will get all "nearest words" (L¹) of the `source` and the `objective`, with a simple regex check:
 > For example, if the word is `words`, we will decompose in 5 regex checks:
