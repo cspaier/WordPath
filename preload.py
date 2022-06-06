@@ -8,16 +8,16 @@ class NearestWords:
     def __init__(self):
         self.preloaded = json.load(open("preload.json", "r"))
 
-    # return a list of all words wich have 1 letter different
+    # return a list of all words which have 1 letter different
     def fetch_nearest_words(self, word, word_list):
 
-        similarWords = []
+        similar_words = []
 
         # index for all letters in word
         for i in range(len(word)):
             # create a regex object:
-            # replace the letter at the I position by a .
-            # in regex, . means all letters
+            # replace the letter at the I position by a.
+            # in regex, `.` means all letters
 
             r = re.compile(f"{word[:i]}.{word[i+1:]}")
 
@@ -25,9 +25,9 @@ class NearestWords:
                 line for line in word_list if r.match(line) and line != word
             ]
 
-        self.preloaded = similarWords
+        self.preloaded = similar_words
 
-        return similarWords
+        return similar_words
 
     def get_nearest_words(self, word, banned_words):
 

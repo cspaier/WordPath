@@ -71,7 +71,7 @@ def search(source, target, max_rounds):
 class PathBody(BaseModel):
     starting: str
     objective: str
-    maxLenght: int = 7
+    maxLength: int = 7
 
 
 class GetNearestWords(BaseModel):
@@ -98,19 +98,19 @@ async def say_hello(resp: Response, data: PathBody):
     if (not re.match("^([A-Za-z]){5}$", data.starting)) or (not re.match("^([A-Za-z]){5}$", data.objective)):
         resp.status_code = status.HTTP_400_BAD_REQUEST
         return {
-            "Error": "Statring and Objective objects must RegEx match ^([A-Za-z]){5}$"
+            "Error": "Starting and Objective objects must RegEx match ^([A-Za-z]){5}$"
         }
 
     elif data.starting not in words or data.objective not in words:
         resp.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         return {
-            "Error": "At least one of theses words is not in our dictonary"
+            "Error": "At least one of theses words is not in our dictionary"
         }
 
     elif not 3 <= data.maxLenght <= 10:
         resp.status_code = status.HTTP_400_BAD_REQUEST
         return {
-            "Error": "maxLenght must be between 3 and 10 (included)"
+            "Error": "maxLength must be between 3 and 10 (included)"
         }
 
     else:
@@ -124,5 +124,5 @@ async def say_hello(resp: Response, data: PathBody):
             }
         resp.status_code = status.HTTP_404_NOT_FOUND
         return {
-            "Error": "Could not find any path between thooses two words"
+            "Error": "Could not find any path between those two words"
         }
