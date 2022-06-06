@@ -28,56 +28,43 @@ nearest = json.load(open("preload.json", "r"))
 def worker(word, target_list, rounds_left, banned_words):
 
     if not rounds_left:
-
         return None
 
-    else:
-        word_list = set(NearestWords.get_nearest_words(word, banned_words))
+    word_list = set(NearestWords.get_nearest_words(word, banned_words))
 
-        result = list(word_list.intersection(target_list))
+    if result := list(word_list.intersection(target_list)):
+        return [result[0]]
 
-        if result:
+    propositions = []
 
-            return [result[0]]
+    for _word in (word for word in word_list if word not in banned_words):
 
-        else:
+        result = worker(_word, target_list, rounds_left - 1, banned_words)
 
-            propositions = []
+        if result is None:
 
-            for _word in (word for word in word_list if word not in banned_words):
+            continue
 
-                result = worker(_word, target_list, rounds_left - 1, banned_words)
+        result.insert(0, _word)
 
-                if result is None:
+        propositions.append(result)
 
-                    continue
-
-                result.insert(0, _word)
-
-                propositions.append(result)
-
-            if not propositions:
-                return None
-
-            else:
-                return min(propositions, key = len)
+    return min(propositions, key = len) if propositions else None
 
 
 def search(source, target, max_rounds):
     if source == target:
         return [source]
 
-    else:
+    target_list = NearestWords.get_nearest_words(target, [])
 
-        target_list = NearestWords.get_nearest_words(target, [])
+    data = worker(source, target_list, max_rounds, [])
 
-        data = worker(source, target_list, max_rounds, [])
+    if data:
+        data.insert(0, source)
+        data.append(target)
 
-        if data:
-            data.insert(0, source)
-            data.append(target)
-
-        return data
+    return data
 
 
 # represent the wanted objects in Body's request
@@ -100,11 +87,10 @@ async def root():
 async def nword_req(resp: Response, data: GetNearestWords):
     if data.word in words:
         return NearestWords.get_nearest_words(data.word, [])
-    else:
-        resp.status_code = status.HTTP_404_NOT_FOUND
-        return {
-            "Error": "This word is not in our dictionary"
-        }
+    resp.status_code = status.HTTP_404_NOT_FOUND
+    return {
+        "Error": "This word is not in our dictionary"
+    }
 
 
 @app.get("/path", status_code = 200)
@@ -131,15 +117,12 @@ async def say_hello(resp: Response, data: PathBody):
 
         data = search(data.starting, data.objective, data.maxLenght - 2)
 
-        if data is None:
-            resp.status_code = status.HTTP_404_NOT_FOUND
-            return {
-                "Error": "Could not find any path between thooses two words"
-            }
-
-        else:
-
+        if data is not None:
             return {
                 "Path": data,
                 "Count": len(data)
             }
+        resp.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            "Error": "Could not find any path between thooses two words"
+        }
