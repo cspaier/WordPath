@@ -19,7 +19,7 @@ class NearestWords:
             # replace the letter at the I position by a .
             # in regex, . means all letters
 
-            r = re.compile(word[:i] + "." + word[i+1:])
+            r = re.compile(f"{word[:i]}.{word[i+1:]}")
 
             similarWords += [
                 line for line in word_list if r.match(line) and line != word
@@ -34,14 +34,18 @@ class NearestWords:
         return [word for word in self.preloaded[word] if word not in banned_words]
 
     def load(self, words):
-        word_data = {}
         print("Loading nearest words ...")
         starting = time.time()
-        for loading_word in words:
-            word_data[loading_word] = self.fetch_nearest_words(loading_word, words)
+        word_data = {
+            loading_word: self.fetch_nearest_words(loading_word, words)
+            for loading_word in words
+        }
 
         with open("preload.json", "w") as file:
             json.dump(word_data, file)
 
-        print(str(len(word_data)) + " nearest words loaded in " + str(round(time.time() - starting, 3)) + " seconds")
+        print(
+            f"{len(word_data)} nearest words loaded in {str(round(time.time() - starting, 3))} seconds"
+        )
+
         print("Now starting the server")
