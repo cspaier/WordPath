@@ -1,6 +1,4 @@
 # WordPath
-THE CODE IS NOT FULLY OPTIMIZED YET
-
 
 idea given by @[cspaier](https://github.com/cspaier)
 
@@ -9,23 +7,8 @@ idea given by @[cspaier](https://github.com/cspaier)
 > Just run `uvicorn main:app --reload` </br>
 > (you must have uvicorn installed)
 
-
-### Estimated duration of the procedure:
-|Max path lenght|Duration (in seconds)| Number of path tested|
-|--|--|--| 
-|3|~ 0.01 second| ~ 5
-|4|~ 0.05 second|~ 15
-|5|~ 0.1 second|~ 44
-|6|~ 0.3 second|~ 300
-|7| ~ 2.3 seconds|~ 2.800
-|8| ~ 21.5 seconds|~ 28.000
-
-**Note:** it depend of the number of possibles paths.
-You should take in consideration the duration in function on the number of path: </br>
-1000 paths tested ≈ 1 second
-
 ### how does it works ?
-The API will get all "nearest words" (L¹) of the `source` and the `objective`, with a simple regex check:
+The API will get all "nearest words" (L¹) of the `source` and the `objective`, in `preloaded.json`. This file has been structured with a simple regex check:
 > For example, if the word is `words`, we will decompose in 5 regex checks:
 > * `.ords`
 > * `w.rds`
