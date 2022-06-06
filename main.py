@@ -1,43 +1,38 @@
+import json
 import re
 from fastapi import FastAPI, Response, status
 from random import choices
 from pydantic import BaseModel
 
+import preload
+
 app = FastAPI()
+
+NearestWords = preload.NearestWords()
 
 # .read().splitlines() ~= .readlines() ,
 # but .readlines() "\n" at the end of each item of the list ,
 # and .read().splitlines() doesn't ;
 words = open("words.txt", "r").read().splitlines()
 
+preload = False
 
-# return a list of all words wich have 1 letter different
-def get_nearest_words(word, word_list):
-    similarWords = []
-
-    # index for all letters in word
-    for i in range(len(word)):
-        # create a regex object:
-        # replace the letter at the I position by a .
-        # in regex, . means all letters
-
-        r = re.compile(word[:i] + "." + word[i+1:])
-
-        similarWords += [
-            line for line in word_list if r.match(line) and line != word
-        ]
-
-    return similarWords
+# preload the words in preload.json
+if preload:
+    NearestWords.load(words)
 
 
-def worker(word, target_list, rounds_left, _words):
+nearest = json.load(open("preload.json", "r"))
+
+
+def worker(word, target_list, rounds_left, banned_words):
 
     if not rounds_left:
 
         return None
 
     else:
-        word_list = set(get_nearest_words(word, _words))
+        word_list = set(NearestWords.get_nearest_words(word, banned_words))
 
         result = list(word_list.intersection(target_list))
 
@@ -47,13 +42,11 @@ def worker(word, target_list, rounds_left, _words):
 
         else:
 
-            _words = [acceptable_word for acceptable_word in _words if acceptable_word not in word_list]
-
             propositions = []
 
-            for _word in word_list:
+            for _word in (word for word in word_list if word not in banned_words):
 
-                result = worker(_word, target_list, rounds_left - 1, _words)
+                result = worker(_word, target_list, rounds_left - 1, banned_words)
 
                 if result is None:
 
@@ -76,11 +69,9 @@ def search(source, target, max_rounds):
 
     else:
 
-        words_list = words.copy()
+        target_list = NearestWords.get_nearest_words(target, [])
 
-        target_list = get_nearest_words(target, words_list)
-
-        data = worker(source, target_list, max_rounds, words_list)
+        data = worker(source, target_list, max_rounds, [])
 
         if data:
             data.insert(0, source)
@@ -106,22 +97,22 @@ async def root():
 
 
 @app.get("/nearest-words", status_code = 201)
-async def nword_req(data: GetNearestWords):
-    return get_nearest_words(data.word, words)
+async def nword_req(resp: Response, data: GetNearestWords):
+    if data.word in words:
+        return NearestWords.get_nearest_words(data.word, [])
+    else:
+        resp.status_code = status.HTTP_404_NOT_FOUND
+        return {
+            "Error": "This word is not in our dictionary"
+        }
 
 
 @app.get("/path", status_code = 200)
 async def say_hello(resp: Response, data: PathBody):
-    if (not re.match("([A-Z]|[a-z])", data.starting)) or (not re.match("([A-Z]|[a-z])", data.objective)):
+    if (not re.match("^([A-Za-z]){5}$", data.starting)) or (not re.match("^([A-Za-z]){5}$", data.objective)):
         resp.status_code = status.HTTP_400_BAD_REQUEST
         return {
-            "Error": "Statring and Objective objects must be strings"
-        }
-
-    elif len(data.starting) != len(data.objective):
-        resp.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-        return {
-            "Error": "Statring and Objective objects must be the same lenght"
+            "Error": "Statring and Objective objects must RegEx match ^([A-Za-z]){5}$"
         }
 
     elif data.starting not in words or data.objective not in words:
@@ -130,7 +121,7 @@ async def say_hello(resp: Response, data: PathBody):
             "Error": "At least one of theses words is not in our dictonary"
         }
 
-    elif not 3 <= data.maxLenght <= 8:
+    elif not 3 <= data.maxLenght <= 50:
         resp.status_code = status.HTTP_400_BAD_REQUEST
         return {
             "Error": "maxLenght must be between 3 and 8 (included)"
