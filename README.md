@@ -1,6 +1,6 @@
 # WordPath
 
-idea given by @[cspaier](https://github.com/cspaier)
+An idea of [@cspaier](https://github.com/cspaier)
 
 
 * How to start the API ?
@@ -8,7 +8,7 @@ idea given by @[cspaier](https://github.com/cspaier)
 > (you must have uvicorn installed)
 
 ### how does it work ?
-The API will get all "nearest words" (L¹) of the `source` and the `objective`, in `preloaded.json`. This file has been structured with a simple regex check:
+The server will calculate all "nearest words" (L¹) of the `source` and the `objective`, and cache them in `preloaded.json`. This file has been structured thanks a simple regex check:
 > For example, if the word is `words`, we will decompose in 5 regex checks:
 > * `.ords`
 > * `w.rds`
@@ -17,15 +17,19 @@ The API will get all "nearest words" (L¹) of the `source` and the `objective`, 
 > * `word.`
 > In regex, `.` means "Any character", so regex will check any word which have only one letter changed
 
+
 - If any word is in both list, then the api found a word in `3` step.
 
-- Else it will retrieve all "nearest words"(L²) of the "nearest words" (L¹).
+- Else it will retrieve all "nearest words"(L²) of the "nearest words" list L¹.
 
 
 - If any word L² is in the nearest words of the objective, then the api found a way to connect those two words.
 
-- Else, the same process will be applied with Lⁿ⁻¹ and Lⁿ until n = `maxLenght`
+- Else, the same process will be applied with Lⁿ⁻¹ and Lⁿ until n = `maxLenght` **if `lenght_limit` is set to `True` (default: `False`)**
 
+
+If you add any words to `words.txt`, please set if `preload` to `True` (default: `False`). It will regenerate `words.json` (it can take severals minutes)
+Once `words.json` is updated, you can set `preload` to `False`
 
 ### Endpoints
 > Get the shortest path between 2 words:
