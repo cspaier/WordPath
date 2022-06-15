@@ -16,6 +16,7 @@ NearestWords = preload.NearestWords()
 words = open("words.txt", "r").read().splitlines()
 
 preload = False
+lenght_limit = False
 
 # preload the words in preload.json
 if preload:
@@ -102,7 +103,8 @@ async def say_hello(resp: Response, data: PathBody):
         resp.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         return {"Error": "At least one of theses words is not in our dictionary"}
 
-    if not 3 <= data.maxLength <= 10:
+
+    elif not 3 <= data.maxLenght <= 10 and lenght_limit:
         resp.status_code = status.HTTP_400_BAD_REQUEST
         return {"Error": "maxLength must be between 3 and 10 (included)"}
 
