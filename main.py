@@ -22,70 +22,54 @@ lenght_limit = False
 if preload:
     NearestWords.load(words)
 
-
 nearest = json.load(open("preload.json", "r"))
 
 
 def worker(word, target_list, rounds_left, banned_words):
-
     if not rounds_left:
-
         return None
 
-    else:
-        word_list = set(NearestWords.get_nearest_words(word, banned_words))
+    word_list = set(NearestWords.get_nearest_words(word, banned_words))
 
-        result = list(word_list.intersection(target_list))
+    if result := list(word_list.intersection(target_list)):
+        return [result[0]]
 
-        if result:
+    propositions = []
 
-            return [result[0]]
+    for _word in (word for word in word_list if word not in banned_words):
 
-        else:
+        result = worker(_word, target_list, rounds_left - 1, banned_words)
 
-            propositions = []
+        if result is None:
+            continue
 
-            for _word in (word for word in word_list if word not in banned_words):
+        result.insert(0, _word)
 
-                result = worker(_word, target_list, rounds_left - 1, banned_words)
+        propositions.append(result)
 
-                if result is None:
-
-                    continue
-
-                result.insert(0, _word)
-
-                propositions.append(result)
-
-            if not propositions:
-                return None
-
-            else:
-                return min(propositions, key = len)
+    return min(propositions, key=len) if propositions else None
 
 
 def search(source, target, max_rounds):
     if source == target:
         return [source]
 
-    else:
+    target_list = NearestWords.get_nearest_words(target, [])
 
-        target_list = NearestWords.get_nearest_words(target, [])
+    data = worker(source, target_list, max_rounds, [])
 
-        data = worker(source, target_list, max_rounds, [])
+    if data:
+        data.insert(0, source)
+        data.append(target)
 
-        if data:
-            data.insert(0, source)
-            data.append(target)
-
-        return data
+    return data
 
 
 # represent the wanted objects in Body's request
 class PathBody(BaseModel):
     starting: str
     objective: str
-    maxLenght: int = 7
+    maxLength: int = 7
 
 
 class GetNearestWords(BaseModel):
@@ -94,53 +78,39 @@ class GetNearestWords(BaseModel):
 
 @app.get("/words")
 async def root():
-    return choices(words, k = 2)
+    return choices(words, k=2)
 
 
-@app.get("/nearest-words", status_code = 201)
+@app.get("/nearest-words", status_code=201)
 async def nword_req(resp: Response, data: GetNearestWords):
     if data.word in words:
         return NearestWords.get_nearest_words(data.word, [])
-    else:
-        resp.status_code = status.HTTP_404_NOT_FOUND
-        return {
-            "Error": "This word is not in our dictionary"
-        }
+    resp.status_code = status.HTTP_404_NOT_FOUND
+    return {"Error": "This word is not in our dictionary"}
 
 
-@app.get("/path", status_code = 200)
+@app.get("/path", status_code=200)
 async def say_hello(resp: Response, data: PathBody):
-    if (not re.match("^([A-Za-z]){5}$", data.starting)) or (not re.match("^([A-Za-z]){5}$", data.objective)):
+    if (not re.match("^([A-Za-z]){5}$", data.starting)) or (
+        not re.match("^([A-Za-z]){5}$", data.objective)
+    ):
         resp.status_code = status.HTTP_400_BAD_REQUEST
         return {
-            "Error": "Statring and Objective objects must RegEx match ^([A-Za-z]){5}$"
+            "Error": "Starting and Objective objects must RegEx match ^([A-Za-z]){5}$"
         }
 
-    elif data.starting not in words or data.objective not in words:
+    if data.starting not in words or data.objective not in words:
         resp.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-        return {
-            "Error": "At least one of theses words is not in our dictonary"
-        }
+        return {"Error": "At least one of theses words is not in our dictionary"}
+
 
     elif not 3 <= data.maxLenght <= 10 and lenght_limit:
         resp.status_code = status.HTTP_400_BAD_REQUEST
-        return {
-            "Error": "maxLenght must be between 3 and 10 (included)"
-        }
+        return {"Error": "maxLength must be between 3 and 10 (included)"}
 
-    else:
+    data = search(data.starting, data.objective, data.maxLength - 2)
 
-        data = search(data.starting, data.objective, data.maxLenght - 2)
-
-        if data is None:
-            resp.status_code = status.HTTP_404_NOT_FOUND
-            return {
-                "Error": "Could not find any path between thooses two words"
-            }
-
-        else:
-
-            return {
-                "Path": data,
-                "Count": len(data)
-            }
+    if data is not None:
+        return {"Path": data, "Count": len(data)}
+    resp.status_code = status.HTTP_404_NOT_FOUND
+    return {"Error": "Could not find any path between those two words"}

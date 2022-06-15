@@ -7,7 +7,7 @@ idea given by @[cspaier](https://github.com/cspaier)
 > Just run `uvicorn main:app --reload` </br>
 > (you must have uvicorn installed)
 
-### how does it works ?
+### how does it work ?
 The API will get all "nearest words" (L¹) of the `source` and the `objective`, in `preloaded.json`. This file has been structured with a simple regex check:
 > For example, if the word is `words`, we will decompose in 5 regex checks:
 > * `.ords`
@@ -19,10 +19,10 @@ The API will get all "nearest words" (L¹) of the `source` and the `objective`, 
 
 - If any word is in both list, then the api found a word in `3` step.
 
-- Else it will retrive all "nearest words"(L²) of the "nearest words" (L¹).
+- Else it will retrieve all "nearest words"(L²) of the "nearest words" (L¹).
 
 
-- If any word L² is in the nearest words of the objective, then the api found a way to connect thooses two words.
+- If any word L² is in the nearest words of the objective, then the api found a way to connect those two words.
 
 - Else, the same process will be applied with Lⁿ⁻¹ and Lⁿ until n = `maxLenght`
 
@@ -42,7 +42,7 @@ Content-Length: 77
 }
 ```
 
-Get nearest words of a word:
+Get the nearest words of a word:
 ```http
 GET /nearest-words HTTP/1.1
 Host: 127.0.0.1:8000
@@ -54,7 +54,7 @@ Content-Length: 25
 }
 ```
 
-Get two random words from the dictonnary
+Get two random words from the dictionary
 ```http
 GET /words HTTP/1.1
 Host: 127.0.0.1:8000
