@@ -31,7 +31,7 @@ def worker(word, target_list, rounds_left, banned_words):
 
     word_list = set(NearestWords.get_nearest_words(word, banned_words))
 
-    if result := list(word_list.intersection(target_list)):
+    if result == list(word_list.intersection(target_list)):
         return [result[0]]
 
     propositions = []
